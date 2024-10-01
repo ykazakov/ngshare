@@ -45,6 +45,14 @@ feedback_files_assoc_table = Table(
     Column('right_id', Integer, ForeignKey('files._id'), primary_key=True),
 )
 
+# Solution -> Course (One to Many)
+solution_files_assoc_table = Table(
+    'solution_files_assoc_table',
+    Base.metadata,
+    Column('left_id', Text, ForeignKey('solutions._id'), primary_key=True),
+    Column('right_id', Integer, ForeignKey('files._id'), primary_key=True),
+)
+
 
 class User(Base):
     'A JupyterHub user; can be either instructor or student, or both'
@@ -135,6 +143,7 @@ class Course(Base):
         cascade='save-update, merge, delete, delete-orphan',
     )
     assignments = relationship('Assignment', back_populates='course')
+    solutions = relationship('Solution', back_populates='course')
 
     def dump(self) -> dict:
         'Dump data to dict'
@@ -156,6 +165,8 @@ class Course(Base):
         'Remove course and dependent data'
         for assignment in self.assignments:
             assignment.delete(db)
+        for solution in self.solutions:
+            solution.delete(db)
         for student in self.students[:]:
             self.students.remove(student)
         for instructor in self.instructors[:]:
@@ -245,6 +256,41 @@ class Submission(Base):
         for file_obj in self.feedbacks[:]:
             file_obj.delete(db)
             self.feedbacks.remove(file_obj)
+        db.delete(self)
+
+
+class Solution(Base):
+    'An nbgrader solution to an assignment'
+    __tablename__ = 'solutions'
+    # in case assignment name needs to be changed
+    _id = Column(Integer, primary_key=True)
+    assignment_id = Column(Integer, ForeignKey('assignments._id'))
+    course_id = Column(Integer, ForeignKey('courses._id'))
+    course = relationship('Course', back_populates='solutions')
+    files = relationship('File', secondary=solution_files_assoc_table)
+    # TODO: timezoon
+
+    def __init__(self, name, course):
+        'Initialize with solution name and course'
+        self.assignment_id = name
+        self.course = course
+
+    def __str__(self):
+        return '<Solution %s>' % self.assignment_id
+
+    def dump(self):
+        'Dump data to dict'
+        return {
+            '_id': self._id,
+            'assignment_id': self.assignment_id,
+            'course_id': self.course_id,
+        }
+
+    def delete(self, db):
+        'Remove solution and dependent data (files)'
+        for file_obj in self.files[:]:
+            file_obj.delete(db)
+            self.files.remove(file_obj)
         db.delete(self)
 
 

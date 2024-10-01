@@ -44,6 +44,7 @@ try:
         Course,
         Assignment,
         Submission,
+        Solution,
         File,
         InstructorAssociation,
         StudentAssociation,
@@ -58,6 +59,7 @@ except ImportError:  # pragma: no cover
         Course,
         Assignment,
         Submission,
+        Solution,
         File,
         InstructorAssociation,
         StudentAssociation,
@@ -263,6 +265,20 @@ class MyHelpers:
         )
         if assignment is None:
             self.json_error(404, 'Assignment not found')
+        return assignment
+
+    def find_solution(self, course, assignment_id):
+        'Return an Assignment object from course and id, or raise error'
+        assignment = (
+            self.db.query(Solution)
+            .filter(
+                Solution.assignment_id == assignment_id,
+                Solution.course == course,
+            )
+            .one_or_none()
+        )
+        if assignment is None:
+            self.json_error(404, 'Solution not found')
         return assignment
 
     def find_course_instructor(self, course, instructor_id):
@@ -943,6 +959,62 @@ class UploadDownloadFeedback(MyRequestHandler):
         )
 
 
+class ListSolutions(MyRequestHandler):
+    '/api/solutions/<course_id>'
+
+    @authenticated
+    def get(self, course_id):
+        'List all solutions for a course (students+instructors)'
+        course = self.find_course(course_id)
+        self.check_course_user(course)
+        solutions = course.solutions
+        self.json_success(
+            solutions=list(map(lambda x: x.assignment_id, solutions))
+        )
+
+
+class DownloadReleaseSolution(MyRequestHandler):
+    '/api/solution/<course_id>/<assignment_id>'
+
+    def get(self, course_id, assignment_id):
+        'Download a copy of a solution (students+instructors)'
+        course = self.find_course(course_id)
+        self.check_course_user(course)
+        solution = self.find_solution(course, assignment_id)
+        list_only = self.get_argument('list_only', 'false') == 'true'
+        files = self.json_files_pack(solution.files, list_only)
+        self.json_success(files=files)
+
+    def post(self, course_id, assignment_id):
+        'Release a solution (instructors only)'
+        course = self.find_course(course_id)
+        self.check_course_instructor(course)
+        if (
+            self.db.query(Solution)
+            .filter(
+                Solution.assignment_id == assignment_id,
+                Solution.course == course,
+            )
+            .one_or_none()
+        ):
+            self.json_error(409, 'Solution already exists')
+        solution = Solution(assignment_id, course)
+        files = self.get_argument('files', None)
+        self.json_files_unpack(files, solution.files)
+        self.db.add(solution)
+        self.db.commit()
+        self.json_success()
+
+    def delete(self, course_id, assignment_id):
+        'Remove a solution (instructors only)'
+        course = self.find_course(course_id)
+        self.check_course_instructor(course)
+        solution = self.find_solution(course, assignment_id)
+        solution.delete(self.db)
+        self.db.commit()
+        self.json_success()
+
+
 class InitDatabase(MyRequestHandler):
     '/initialize-Data6ase'
 
@@ -1039,6 +1111,8 @@ class MyApplication(Application):
                 prefix + 'feedback/([^/]+)/([^/]+)/([^/]+)',
                 UploadDownloadFeedback,
             ),
+            (prefix + 'solutions/([^/]+)', ListSolutions),
+            (prefix + 'solution/([^/]+)/([^/]+)', DownloadReleaseSolution),
             (prefix + 'initialize-Data6ase', InitDatabase),
             (prefix + 'oauth_callback', JupyterHubLoginHandler),
             (prefix + 'healthz', HealthCheckHandler),

@@ -187,4 +187,32 @@
       /api/feedback/&lt;course_id&gt;/&lt;assignment_id&gt;/&lt;student_id&gt;</a>:
   Download feedback
 </p>
+</p>
+  GET
+  <a href="solutions/course2{% if vngshare %}?user=abigail{% end %}">
+    /api/solutions/&lt;course_id&gt;</a>:
+  List solutions
+</p>
+<p>
+  GET
+  <a href="solution/course1/challenge{% if vngshare %}?user=lawrence{% end %}">
+    /api/solution/&lt;course_id&gt;/&lt;assignment_id&gt;</a>:
+  Download solution
+</p>
+<form id="form7" action="solution/course1/challenger" method="POST">
+  <input type="hidden" name="files" value="[{&quot;path&quot;: &quot;a&quot;, &quot;content&quot;: &quot;amtsCg==&quot;}]" />
+  <!-- [{"path": "a", "content": "amtsCg=="}] -->
+  {% if vngshare %}<input type="hidden" name="user" value="kevin" />{% end %}
+  <p>
+    POST
+      <a href="" onclick="document.getElementById('form7').submit(); event.preventDefault();">/api/solution/&lt;course_id&gt;/&lt;assignment_id&gt;</a>:
+    Release solution (see HTML form)
+  </p>
+</form>
+<p>
+  DELETE
+  <u>
+    /api/solution/&lt;course_id&gt;/&lt;assignment_id&gt;</u>:
+  Remove solution
+</p>
 </body>

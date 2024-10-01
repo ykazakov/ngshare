@@ -24,11 +24,13 @@ def clear_db(db, storage_path):
     db.query(Course).delete()
     db.query(Assignment).delete()
     db.query(Submission).delete()
+    db.query(Solution).delete()
     db.query(File).delete()
     db.query(InstructorAssociation).delete()
     db.query(StudentAssociation).delete()
     for table_name in [
         'assignment_files_assoc_table',
+        'solution_files_assoc_table',
         'submission_files_assoc_table',
         'feedback_files_assoc_table',
     ]:
@@ -81,8 +83,14 @@ def init_db(db, storage_path):
     s1.files.append(File('file3', b'33333', 'actual3'))
     s2.files.append(File('file4', b'44444', 'actual4'))
     s1.feedbacks.append(File('file5', b'55555', 'actual5'))
+    sa = Solution('assignment2a', course2)
+    sc = Solution('challenge', course1)
+    db.add(sa)
+    db.add(sc)
+    sa.files.append(File('file6', b'66666', 'actual6'))
+    sc.files.append(File('file7', b'77777', 'actual7'))
     os.makedirs(storage_path, exist_ok=True)
-    for i in range(6):
+    for i in range(8):
         f = open(os.path.join(storage_path, 'actual%d' % i), 'wb')
         f.write((b'%d' % i) * 5)
         f.close()
@@ -97,6 +105,7 @@ def dump_db(db):
         Course,
         Assignment,
         Submission,
+        Solution,
         File,
         InstructorAssociation,
         StudentAssociation,
@@ -105,6 +114,7 @@ def dump_db(db):
             ans[table.__tablename__].append(i.dump())
     for table in (
         assignment_files_assoc_table,
+        solution_files_assoc_table,
         submission_files_assoc_table,
         feedback_files_assoc_table,
     ):
@@ -168,12 +178,14 @@ def test_init():
     db = Session()
     clear_db(db, None)
     assert not db.query(assignment_files_assoc_table).all()
+    assert not db.query(solution_files_assoc_table).all()
     assert not db.query(submission_files_assoc_table).all()
     assert not db.query(feedback_files_assoc_table).all()
     assert not db.query(User).all()
     assert not db.query(Course).all()
     assert not db.query(Assignment).all()
     assert not db.query(Submission).all()
+    assert not db.query(Solution).all()
     assert not db.query(File).all()
     assert not db.query(InstructorAssociation).all()
     assert not db.query(StudentAssociation).all()
@@ -183,13 +195,15 @@ def test_init():
     assert len(db.query(Course).all()) == 2
     assert len(db.query(Assignment).all()) == 3
     assert len(db.query(Submission).all()) == 2
-    assert len(db.query(File).all()) == 6
+    assert len(db.query(Solution).all()) == 2
+    assert len(db.query(File).all()) == 8
     dumped = dump_db(db)
     assert len(dumped['users']) == 4
     assert len(dumped['courses']) == 2
     assert len(dumped['assignments']) == 3
     assert len(dumped['submissions']) == 2
-    assert len(dumped['files']) == 6
+    assert len(dumped['solutions']) == 2
+    assert len(dumped['files']) == 8
 
 
 def test_upload_feedback():
@@ -204,7 +218,7 @@ def test_upload_feedback():
         db.delete(file)
     s1.feedbacks.clear()
     db.commit()
-    assert len(db.query(File).all()) == 5
+    assert len(db.query(File).all()) == 7
 
 
 def test_remove_assignment():
@@ -216,8 +230,9 @@ def test_remove_assignment():
     ac.delete(db)
     db.commit()
     assert len(db.query(Assignment).all()) == 2
+    assert len(db.query(Solution).all()) == 2
     assert len(db.query(Submission).all()) == 0
-    assert len(db.query(File).all()) == 2
+    assert len(db.query(File).all()) == 4
 
 
 def test_instructor_association():
@@ -307,6 +322,7 @@ def test_print():
     assert str(db.query(User).first()).startswith('<User')
     assert str(db.query(Course).first()).startswith('<Course')
     assert str(db.query(Assignment).first()).startswith('<Assignment')
+    assert str(db.query(Solution).first()).startswith('<Solution')
     assert str(db.query(Submission).first()).startswith('<Submission')
     assert str(db.query(File).first()).startswith('<File')
 
