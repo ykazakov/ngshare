@@ -835,7 +835,11 @@ def test_list_submissions(http_client, base_url):
     )
     result = yield from assert_success(url + 'course1/challenge')
     assert len(result['submissions']) == 2
-    assert set(result['submissions'][0]) == {'student_id', 'timestamp'}
+    assert set(result['submissions'][0]) == {
+        'student_id',
+        'timestamp',
+        'checksum',
+    }
     assert result['submissions'][0]['student_id'] == 'lawrence'
     assert result['submissions'][1]['student_id'] == 'lawrence'
     user = 'abigail'
@@ -868,7 +872,11 @@ def test_list_student_submission(http_client, base_url):
     )
     result = yield from assert_success(url + 'course1/challenge/lawrence')
     assert len(result['submissions']) == 2
-    assert set(result['submissions'][0]) == {'student_id', 'timestamp'}
+    assert set(result['submissions'][0]) == {
+        'student_id',
+        'timestamp',
+        'checksum',
+    }
     user = 'eric'
     result = yield from assert_success(url + 'course2/assignment2a/eric')
     assert len(result['submissions']) == 0

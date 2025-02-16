@@ -258,6 +258,15 @@ class Submission(Base):
             self.feedbacks.remove(file_obj)
         db.delete(self)
 
+    def checksum(self) -> str:
+        'Compute the checksum of this submission by combining file names and their checksums.'
+        sorted_file_data = sorted(
+            (file.filename, file.checksum) for file in self.files
+        )
+        combined_string = ''.join(
+            f"{filename}:{checksum}" for filename, checksum in sorted_file_data
+        ).encode('utf-8')
+        return hashlib.md5(combined_string).hexdigest()
 
 class Solution(Base):
     'An nbgrader solution to an assignment'

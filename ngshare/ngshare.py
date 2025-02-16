@@ -833,6 +833,7 @@ class ListSubmissions(MyRequestHandler):
                 {
                     'student_id': submission.student.id,
                     'timestamp': self.strftime(submission.timestamp),
+                    'checksum': submission.checksum(),
                 }
             )
         self.json_success(submissions=submissions)
@@ -858,6 +859,7 @@ class ListStudentSubmissions(MyRequestHandler):
                 {
                     'student_id': submission.student.id,
                     'timestamp': self.strftime(submission.timestamp),
+                    'checksum': submission.checksum(),
                 }
             )
         self.json_success(submissions=submissions)
@@ -876,7 +878,10 @@ class SubmitAssignment(MyRequestHandler):
         self.json_files_unpack(files, submission.files)
         self.db.add(submission)
         self.db.commit()
-        self.json_success(timestamp=self.strftime(submission.timestamp))
+        self.json_success(
+            timestamp=self.strftime(submission.timestamp),
+            checksum=submission.checksum(),
+        )
 
 
 class DownloadAssignment(MyRequestHandler):
