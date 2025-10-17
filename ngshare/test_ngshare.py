@@ -39,6 +39,7 @@ def app():
     os.environ["JUPYTERHUB_API_URL"] = "http://hub.api"
     os.environ["JUPYTERHUB_API_TOKEN"] = "token"
     os.environ["JUPYTERHUB_CLIENT_ID"] = "ngshare-client"
+    os.environ["JUPYTERHUB_OAUTH_CALLBACK_URL"] = "service/prefix/oauth_callback"
     os.environ["JUPYTERHUB_SERVICE_PREFIX"] = "service/prefix/"
     application = MyApplication(
         '/api/',

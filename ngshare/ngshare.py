@@ -1057,8 +1057,7 @@ class MyApplication(Application):
             login_url='/oauth_callback',
             api_token=os.environ['JUPYTERHUB_API_TOKEN'],
             client_id=os.environ['JUPYTERHUB_CLIENT_ID'],
-            redirect_uri=os.environ['JUPYTERHUB_SERVICE_PREFIX'].rstrip('/')
-            + '/oauth_callback',
+            redirect_uri=os.environ['JUPYTERHUB_OAUTH_CALLBACK_URL'],
             authorize_url=authorize_url,
             token_url=token_url,
             user_url=user_url,
